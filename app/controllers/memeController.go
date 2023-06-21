@@ -1,19 +1,100 @@
 package controllers
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/Rayato159/awaken-discord-bot/app/models"
 	"github.com/Rayato159/awaken-discord-bot/app/repositories"
+	"github.com/Rayato159/awaken-discord-bot/pkg/kawaiiauth"
 	"github.com/bwmarrin/discordgo"
+	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type MemeController struct {
+	Session        *discordgo.Session
 	MemeRepository *repositories.MemeRepository
 }
 
-func (h *MemeController) Awaken() {}
+func (h *MemeController) Awaken(c echo.Context) error {
+	token := strings.TrimPrefix(c.Request().Header.Get("Authorization"), "Bearer ")
+	if token == "" {
+		// Token is missing, return an error response
+		return c.JSON(http.StatusUnauthorized, struct {
+			Message string `json:"message"`
+		}{
+			Message: "ไม่ให้เข้า",
+		})
+	}
+
+	kawaiiAuth := kawaiiauth.NewKawaiiAuth(h.MemeRepository.Cfg)
+	_, err := kawaiiAuth.ParseJwtToken(context.Background(), token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, struct {
+			Message string `json:"message"`
+		}{
+			Message: "ไม่ให้เข้า",
+		})
+	}
+
+	meme, err := h.MemeRepository.Awaken()
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, struct {
+			Message string `json:"message"`
+		}{
+			Message: err.Error(),
+		})
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Image: &discordgo.MessageEmbedImage{
+			URL: meme.ImageUrl,
+		},
+		Title: meme.Title,
+		Type:  discordgo.EmbedTypeImage,
+	}
+
+	// Send the message with the embed
+	// 419106310110576642 main ch
+	channelIds := []string{
+		"419106310110576642",
+	}
+
+	jobsCh := make(chan string, len(channelIds))
+	resultsCh := make(chan string, len(channelIds))
+
+	for _, c := range channelIds {
+		jobsCh <- c
+	}
+	close(jobsCh)
+
+	numberWorkers := 2
+	for w := 0; w < numberWorkers; w++ {
+		go func(jobsCh <-chan string, resultsCh chan<- string) {
+			for job := range jobsCh {
+				for i := 0; i < 10; i++ {
+					h.Session.ChannelMessageSendEmbed(job, embed)
+				}
+				resultsCh <- job
+			}
+		}(jobsCh, resultsCh)
+	}
+
+	// Send the message with the embed
+	for a := 0; a < len(channelIds); a++ {
+		result := <-resultsCh
+		fmt.Println("complated, message sended embed to channel_id:", result)
+	}
+
+	return c.JSON(http.StatusOK, struct {
+		Message string `json:"message"`
+	}{
+		Message: "OK ผ่าน",
+	})
+}
 
 func (h *MemeController) InsertMeme(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	command := i.ApplicationCommandData()

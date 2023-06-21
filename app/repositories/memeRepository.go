@@ -115,17 +115,21 @@ func (r *MemeRepository) Awaken() (*models.Meme, error) {
 	}
 	defer cursor.Close(ctx)
 
-	var memeObjectID primitive.ObjectID
+	type memeToHold struct {
+		MemeObjectID primitive.ObjectID `bson:"meme_id,omitempty" json:"meme_id"`
+	}
+
+	hold := memeToHold{}
 	for cursor.Next(ctx) {
-		err := cursor.Decode(&memeObjectID)
+		err := cursor.Decode(&hold)
 		if err != nil {
 			return nil, fmt.Errorf("decode memeObjectID failed: %v", err)
 		}
 	}
 
 	result := new(models.Meme)
-	if err := r.Db.Database(r.Cfg.Db().Dbname()).Collection("meme").FindOne(ctx, bson.M{"_id": memeObjectID}, nil).Decode(result); err != nil {
-		return nil, fmt.Errorf("find one meme_id: %v failed: %v", memeObjectID, err)
+	if err := r.Db.Database(r.Cfg.Db().Dbname()).Collection("meme").FindOne(ctx, bson.M{"_id": hold.MemeObjectID}, nil).Decode(result); err != nil {
+		return nil, fmt.Errorf("find one meme_id: %v failed: %v", hold.MemeObjectID, err)
 	}
 	return result, nil
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/Rayato159/awaken-discord-bot/app/repositories"
 	"github.com/Rayato159/awaken-discord-bot/config"
 	"github.com/bwmarrin/discordgo"
+	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -63,6 +64,7 @@ func (s *discordServer) Start() {
 	}
 
 	handler := &controllers.MemeController{
+		Session: s.dg,
 		MemeRepository: &repositories.MemeRepository{
 			Cfg: s.cfg,
 			Db:  s.db,
@@ -109,14 +111,14 @@ func (s *discordServer) Start() {
 	s.commandHandlers["set"] = handler.SetMeme
 	s.commandHandlers["find"] = handler.FindMeme
 
-	// router := mux.NewRouter()
-	// router.HandleFunc("/meme", module.AtomikkuModule().Handler().RandMeme).Methods("POST")
+	e := echo.New()
+	e.POST("/meme", handler.Awaken)
 
-	// // Start the HTTP server in a separate Goroutine
-	// go func() {
-	// 	log.Println("Http server is starting.")
-	// 	log.Fatal(http.ListenAndServe(":8080", router))
-	// }()
+	// Start the HTTP server in a separate Goroutine
+	go func() {
+		log.Println("http server is starting on :8080.")
+		e.Logger.Fatal(e.Start(":8080"))
+	}()
 
 	log.Println("Adding commands...")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(s.commands))
