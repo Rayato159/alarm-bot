@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/Rayato159/awaken-discord-bot/app/models"
@@ -53,9 +54,14 @@ func (h *MemeController) Awaken(c echo.Context) error {
 		Image: &discordgo.MessageEmbedImage{
 			URL: meme.ImageUrl,
 		},
-		Title: meme.Title,
-		Type:  discordgo.EmbedTypeImage,
+		Type: discordgo.EmbedTypeImage,
 	}
+
+	file, err := os.Open("./assets/andriod-alarm.mp3")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
 	// Send the message with the embed
 	// 419106310110576642 main ch
@@ -75,8 +81,10 @@ func (h *MemeController) Awaken(c echo.Context) error {
 	for w := 0; w < numberWorkers; w++ {
 		go func(jobsCh <-chan string, resultsCh chan<- string) {
 			for job := range jobsCh {
-				for i := 0; i < 5; i++ {
+				for i := 0; i < 1; i++ {
 					h.Session.ChannelMessageSendEmbed(job, embed)
+					h.Session.ChannelMessageSendTTS(job, meme.Title)
+					h.Session.ChannelFileSend(job, "andriod-alarm.mp3", file)
 				}
 				resultsCh <- job
 			}
