@@ -207,6 +207,7 @@ func (h *MemeController) SetMeme(s *discordgo.Session, i *discordgo.InteractionC
 				Content: err.Error(),
 			},
 		})
+		return
 	}
 
 	if _, err := h.MemeRepository.SetMeme(memeObjectID); err != nil {
@@ -216,6 +217,7 @@ func (h *MemeController) SetMeme(s *discordgo.Session, i *discordgo.InteractionC
 				Content: err.Error(),
 			},
 		})
+		return
 	}
 
 	meme, err := h.MemeRepository.FindOneMeme(memeObjectID)
@@ -226,6 +228,7 @@ func (h *MemeController) SetMeme(s *discordgo.Session, i *discordgo.InteractionC
 				Content: err.Error(),
 			},
 		})
+		return
 	}
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
