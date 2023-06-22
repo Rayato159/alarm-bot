@@ -75,7 +75,7 @@ func (h *MemeController) Awaken(c echo.Context) error {
 	for w := 0; w < numberWorkers; w++ {
 		go func(jobsCh <-chan string, resultsCh chan<- string) {
 			for job := range jobsCh {
-				for i := 0; i < 10; i++ {
+				for i := 0; i < 5; i++ {
 					h.Session.ChannelMessageSendEmbed(job, embed)
 				}
 				resultsCh <- job

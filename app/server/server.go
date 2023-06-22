@@ -18,7 +18,7 @@ import (
 
 // Bot parameters
 var (
-	GuildID        = flag.String("guild", "", "Test guild ID. If not passed - bot registers commands globally")
+	GuildID        = flag.String("guild", "419106310110576640", "Test guild ID. If not passed - bot registers commands globally")
 	RemoveCommands = flag.Bool("rmcmd", true, "Remove all commands after shutdowning or not")
 	buffer         = make([][]byte, 0)
 )
@@ -59,6 +59,7 @@ func (s *discordServer) Start() {
 	s.dg.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
 	})
+
 	if err := s.dg.Open(); err != nil {
 		log.Fatal("error opening connection,", err)
 	}
