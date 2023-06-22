@@ -13,6 +13,6 @@ RUN apt-get update && apt-get install -y ca-certificates
 
 COPY --from=build /bin/app /bin
 COPY .env /bin
-COPY /assets /bin/assets/andriod-alarm.mp3
+COPY /assets /bin/assets
 
 CMD [ "/bin/app" ]
