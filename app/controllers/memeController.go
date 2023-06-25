@@ -65,9 +65,19 @@ func (h *MemeController) Awaken(c echo.Context) error {
 
 	// Send the message with the embed
 	// 419106310110576642 main ch
-	channelIds := []string{
-		"419106310110576642",
-		"1122388395533021254",
+	channelIds := make([]string, 0)
+	channels := h.MemeRepository.FindChannelIds()
+
+	if len(channels) == 0 {
+		return c.JSON(http.StatusUnauthorized, struct {
+			Message string `json:"message"`
+		}{
+			Message: "channels are empty",
+		})
+	}
+
+	for _, ch := range channels {
+		channelIds = append(channelIds, ch.ChannelId)
 	}
 
 	jobsCh := make(chan string, len(channelIds))
@@ -291,4 +301,57 @@ func (h *MemeController) FindMeme(s *discordgo.Session, i *discordgo.Interaction
 	}
 	memeList += "\n```"
 	s.ChannelMessageSend(i.ChannelID, memeList)
+}
+
+func (h *MemeController) SetChannels(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	command := i.ApplicationCommandData()
+
+	approvedIds := map[string]bool{
+		"272256561366433792": true,
+	}
+
+	if !approvedIds[i.Member.User.ID] {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "จ๊ะเอ๊ตัวเอง ฮ่าๆ สวัสดีครับท่านผู้เจริญ",
+			},
+		})
+		return
+	}
+
+	var ChannelIdsStr string
+	for _, c := range command.Options {
+		switch c.Name {
+		case "ids":
+			ChannelIdsStr = c.StringValue()
+		}
+	}
+	ChannelIdsStrSep := strings.Split(ChannelIdsStr, ",")
+	ChannelIds := make([]models.Channels, 0)
+	for _, ch := range ChannelIdsStrSep {
+		temp := models.Channels{
+			ChannelId: ch,
+		}
+		ChannelIds = append(ChannelIds, temp)
+	}
+
+	if err := h.MemeRepository.SetChannel(ChannelIds); err != nil {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: err.Error(),
+			},
+		})
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("set channel completed"),
+		},
+	})
+
+	// Send the message with the embed
+	s.ChannelMessageSend(i.ChannelID, ChannelIdsStr)
 }

@@ -106,11 +106,23 @@ func (s *discordServer) Start() {
 			Description: "Show all meme list",
 			Type:        discordgo.ChatApplicationCommand,
 		},
+		&discordgo.ApplicationCommand{
+			Name:        "set-channels",
+			Description: "To add a channel_id",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "ids",
+					Description: "such as 11111,22222,33333",
+					Type:        discordgo.ApplicationCommandOptionString,
+				},
+			},
+		},
 	)
 
 	s.commandHandlers["add"] = handler.InsertMeme
 	s.commandHandlers["set"] = handler.SetMeme
 	s.commandHandlers["find"] = handler.FindMeme
+	s.commandHandlers["set-channels"] = handler.SetChannels
 
 	e := echo.New()
 	e.POST("/meme", handler.Awaken)

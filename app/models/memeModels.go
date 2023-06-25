@@ -7,3 +7,7 @@ type Meme struct {
 	Title    string             `bson:"title,omitempty" json:"title"`
 	ImageUrl string             `bson:"image_url,omitempty" json:"image_url"`
 }
+
+type Channels struct {
+	ChannelId string `bson:"channel_id,omitempty" json:"channel_ids"`
+}

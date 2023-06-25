@@ -133,3 +133,56 @@ func (r *MemeRepository) Awaken() (*models.Meme, error) {
 	}
 	return result, nil
 }
+
+func (r *MemeRepository) SetChannel(channelIds []models.Channels) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	deletedResult, err := r.Db.Database(r.Cfg.Db().Dbname()).Collection("channels").DeleteMany(ctx, bson.M{}, nil)
+	if err != nil {
+		return err
+	}
+	fmt.Println(deletedResult)
+
+	if len(channelIds) == 0 {
+		return fmt.Errorf("channels are empty")
+	}
+
+	data := make([]interface{}, 0)
+	for _, c := range channelIds {
+		data = append(data, c)
+	}
+	result, err := r.Db.Database(r.Cfg.Db().Dbname()).Collection("channels").InsertMany(
+		ctx,
+		data,
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("set channels failed: %v", err)
+	}
+	fmt.Println("set channels completed", result)
+	return nil
+}
+
+func (r *MemeRepository) FindChannelIds() []models.Channels {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	cursor, err := r.Db.Database(r.Cfg.Db().Dbname()).Collection("channels").Find(ctx, bson.M{}, nil)
+	if err != nil {
+		return make([]models.Channels, 0)
+	}
+	defer cursor.Close(ctx)
+
+	data := make([]models.Channels, 0)
+	for cursor.Next(ctx) {
+		var result models.Channels
+		if err := cursor.Decode(&result); err != nil {
+			fmt.Println(err)
+			return make([]models.Channels, 0)
+		}
+		data = append(data, result)
+	}
+
+	return data
+}
