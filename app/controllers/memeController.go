@@ -67,6 +67,7 @@ func (h *MemeController) Awaken(c echo.Context) error {
 	// 419106310110576642 main ch
 	channelIds := []string{
 		"419106310110576642",
+		"1122388395533021254",
 	}
 
 	jobsCh := make(chan string, len(channelIds))
