@@ -57,8 +57,8 @@ func (h *MemeController) Awaken(c echo.Context) error {
 		Type: discordgo.EmbedTypeImage,
 	}
 
-	// file, err := os.Open("./bin/assets/andriod-alarm.mp3")
-	file, err := os.Open("./assets/andriod-alarm.mp3")
+	file, err := os.Open("./bin/assets/andriod-alarm.mp3")
+	// file, err := os.Open("./assets/andriod-alarm.mp3")
 	if err != nil {
 		return err
 	}
