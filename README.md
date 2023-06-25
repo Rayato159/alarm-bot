@@ -14,4 +14,7 @@ Find Memes
 
 Set Meme to Awake
 /set id:?
+
+Set Channels to publish
+/set ids:?
 ```
